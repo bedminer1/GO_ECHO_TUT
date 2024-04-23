@@ -10,6 +10,14 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 )
 
+type ProductValidator struct {
+	validator *validator.Validate
+}
+
+func (p *ProductValidator) Validate(i interface{}) error {
+	return p.validator.Struct(i)
+}
+
 func main() {
 	port := os.Getenv("MY_APP_PORT")
 	if port == "" {
@@ -53,14 +61,16 @@ func main() {
 		type body struct {
 			Name string `json:"product_name" validate:"required,min=4"`
 		}
+
 		var reqBody body
+		e.Validator = &ProductValidator{validator: v}
 		err := c.Bind(&reqBody)
 		if err != nil {
 			return err
 		}
-		err = v.Struct(reqBody)
+		err = c.Validate(reqBody)
 		if err != nil {
-			return nil
+			return err
 		}
 
 		product := map[int]string{
