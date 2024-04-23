@@ -9,8 +9,9 @@ import (
 func main() {
 	e := echo.New()
 	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusAccepted, "hello world")
-	})
+		return c.String(http.StatusOK, "hello world")
+	})	
 
-	e.Start(":8080")
+	e.Logger.Print("Listening on port 8080")
+	e.Logger.Fatal(e.Start("localhost:8080"))
 }
