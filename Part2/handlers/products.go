@@ -6,9 +6,9 @@ import (
 	"net/http"
 
 	"github.com/bedminer1/SampleEchoServer/dbiface"
-	"gopkg.in/go-playground/validator.v9"
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"gopkg.in/go-playground/validator.v9"
 )
 
 var (
@@ -73,7 +73,7 @@ func (h *ProductHandler) CreateProducts(c echo.Context) error {
 	for _, product := range products {
 		if err := c.Validate(product); err != nil {
 			log.Printf("Unable to validate product %+v, %v", product, err)
-			return  nil
+			return err
 		}
 	}
 
