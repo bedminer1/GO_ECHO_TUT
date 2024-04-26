@@ -6,8 +6,11 @@ import (
 	"log"
 
 	"github.com/bedminer1/SampleEchoServer/config"
+	"github.com/bedminer1/SampleEchoServer/handlers"
+
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/labstack/echo/v4"
+	
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -23,15 +26,25 @@ func init() {
 	if err := cleanenv.ReadEnv(cfg); err != nil {
 		log.Fatalf("Config cannot be read: %v", err)
 	}
+
 	connectURI := fmt.Sprintf("mongodb://%s%s", cfg.DBHost, cfg.DBPort)
-	mongo.Connect(context.Background(), options.Client().ApplyURI(connectURI))
+	c, err := mongo.Connect(context.Background(), options.Client().ApplyURI(connectURI))
+	if err != nil {
+		log.Fatalf("Unable to connect to database: %v", err)
+	}
+
+	db = c.Database(cfg.DBName)
+	col = db.Collection(cfg.ProductCollection)
 }
 
 func main() {
 	e := echo.New()
 
 	// HANDLERS
-	e.POST("/products", CreateProduct)
+	e.POST("/products", handlers.CreateProducts)
 
-	e.Logger.Fatal(e.Start(":8000"))
+
+	// START SERVER
+	e.Logger.Infof("Listening on %s%s", cfg.Host, cfg.Port)
+	e.Logger.Fatal(e.Start(fmt.Sprintf("%s%s", cfg.Host, cfg.Port)))
 }

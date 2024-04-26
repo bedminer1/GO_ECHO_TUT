@@ -1,6 +1,9 @@
 package handlers
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"github.com/labstack/echo/v4"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 //Product describes an electronic product e.g. phone
 type Product struct {
@@ -12,4 +15,8 @@ type Product struct {
 	Vendor      string             `json:"vendor" bson:"vendor" validate:"required"`
 	Accessories []string           `json:"accessories,omitempty" bson:"accessories,omitempty"`
 	IsEssential bool               `json:"is_essential" bson:"is_essential"`
+}
+
+func CreateProducts(c echo.Context) error {
+	return nil
 }
