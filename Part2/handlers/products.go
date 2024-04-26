@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/bedminer1/SampleEchoServer/dbiface"
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -19,7 +20,14 @@ type Product struct {
 	IsEssential bool               `json:"is_essential" bson:"is_essential"`
 }
 
+// ProductHandler pass in col(reference to mongodb collection) as attribute
+type ProductHandler struct {
+	Col dbiface.CollectionAPI
+}
+
 // CreateProducts create products on mongodb
-func CreateProducts(c echo.Context) error {
+func (h *ProductHandler) CreateProducts(c echo.Context) error {
+
+
 	return c.JSON(http.StatusCreated, "created")
 }

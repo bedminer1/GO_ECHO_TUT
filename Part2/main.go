@@ -39,9 +39,10 @@ func init() {
 
 func main() {
 	e := echo.New()
+	h := handlers.ProductHandler{Col: col}
 
 	// HANDLERS
-	e.POST("/products", handlers.CreateProducts)
+	e.POST("/products", h.CreateProducts)
 
 
 	// START SERVER
