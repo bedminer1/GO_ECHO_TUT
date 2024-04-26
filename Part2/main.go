@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+
 
 	"github.com/bedminer1/SampleEchoServer/config"
 	"github.com/bedminer1/SampleEchoServer/handlers"
@@ -12,12 +12,14 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/random"
+	"github.com/labstack/gommon/log"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 const (
+	// CorrelationID is request id unique to request
 	CorrelationID = "X-Correlation-ID"
 )
 
@@ -60,6 +62,7 @@ func addCorrelationID(next echo.HandlerFunc) echo.HandlerFunc {
 
 func main() {
 	e := echo.New()
+	e.Logger.SetLevel(log.ERROR)
 	h := handlers.ProductHandler{Col: col}
 
 	// MIDDLEWARE
@@ -68,6 +71,7 @@ func main() {
 
 	// HANDLERS
 	e.POST("/products", h.CreateProducts, middleware.BodyLimit("1M")) // 1mb payload limit
+	e.GET("/products", h.GetProducts)
 
 
 	// START SERVER

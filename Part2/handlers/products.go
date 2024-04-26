@@ -2,12 +2,15 @@ package handlers
 
 import (
 	"context"
-	"log"
 	"net/http"
 
 	"github.com/bedminer1/SampleEchoServer/dbiface"
+	
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/bson"
 	"gopkg.in/go-playground/validator.v9"
 )
 
@@ -42,6 +45,28 @@ type ProductValidator struct {
 func (p *ProductValidator) Validate(i interface{}) error {
 	return p.validator.Struct(i)
 }
+ 
+func findProducts(ctx context.Context, collection dbiface.CollectionAPI) ([]Product, error) {
+	var products []Product
+	cursor, err := collection.Find(ctx, bson.M{})
+	if err != nil {
+		log.Errorf("Unable to find products: %v", err)
+	}
+	if err := cursor.All(ctx, &products); err != nil {
+		log.Errorf("Unable to read cursor: %v", err)
+	}
+	return products, nil
+}
+
+// GetProducts is a HandlerFunc that writes a list of products
+func (h ProductHandler) GetProducts(c echo.Context) error {
+	products, err := findProducts(context.Background(), h.Col)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, products)
+}
 
 // insertProducts generates IDs and inserts products into mongo col
 func insertProducts(ctx context.Context, products []Product, collection dbiface.CollectionAPI) ([]interface{}, error) {
@@ -50,7 +75,7 @@ func insertProducts(ctx context.Context, products []Product, collection dbiface.
 		product.ID = primitive.NewObjectID()
 		insertID, err := collection.InsertOne(ctx, product)
 		if err != nil {
-			log.Printf("Unable to insert %v", err)
+			log.Errorf("Unable to insert %v", err)
 			return nil, err
 		}
 		insertedIds = append(insertedIds, insertID.InsertedID)
@@ -65,14 +90,14 @@ func (h *ProductHandler) CreateProducts(c echo.Context) error {
 
 	// bind echoContext to products
 	if err := c.Bind(&products); err != nil {
-		log.Printf("Unable to bind: %v", err)
+		log.Errorf("Unable to bind: %v", err)
 		return err
 	}
 
 	// validate products
 	for _, product := range products {
 		if err := c.Validate(product); err != nil {
-			log.Printf("Unable to validate product %+v, %v", product, err)
+			log.Errorf("Unable to validate product %+v, %v", product, err)
 			return err
 		}
 	}
