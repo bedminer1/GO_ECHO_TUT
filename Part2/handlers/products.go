@@ -6,8 +6,13 @@ import (
 	"net/http"
 
 	"github.com/bedminer1/SampleEchoServer/dbiface"
+	"gopkg.in/go-playground/validator.v9"
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
+var (
+	v = validator.New()
 )
 
 //Product describes an electronic product e.g. phone
@@ -25,6 +30,17 @@ type Product struct {
 // ProductHandler pass in col(reference to mongodb collection) as attribute
 type ProductHandler struct {
 	Col dbiface.CollectionAPI
+}
+
+// ProductValidator class with validate method
+type ProductValidator struct {
+	validator *validator.Validate
+}
+
+
+// Validate method that validates a product
+func (p *ProductValidator) Validate(i interface{}) error {
+	return p.validator.Struct(i)
 }
 
 // insertProducts generates IDs and inserts products into mongo col
@@ -45,9 +61,20 @@ func insertProducts(ctx context.Context, products []Product, collection dbiface.
 // CreateProducts create products on mongodb
 func (h *ProductHandler) CreateProducts(c echo.Context) error {
 	var products []Product
+	c.Echo().Validator = &ProductValidator{validator: v}
+
+	// bind echoContext to products
 	if err := c.Bind(&products); err != nil {
 		log.Printf("Unable to bind: %v", err)
 		return err
+	}
+
+	// validate products
+	for _, product := range products {
+		if err := c.Validate(product); err != nil {
+			log.Printf("Unable to validate product %+v, %v", product, err)
+			return  nil
+		}
 	}
 
 	IDs, err := insertProducts(context.Background(), products, h.Col)
