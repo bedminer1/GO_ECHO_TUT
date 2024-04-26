@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -17,6 +19,7 @@ type Product struct {
 	IsEssential bool               `json:"is_essential" bson:"is_essential"`
 }
 
+// CreateProducts create products on mongodb
 func CreateProducts(c echo.Context) error {
-	return nil
+	return c.JSON(http.StatusCreated, "created")
 }
