@@ -56,6 +56,7 @@ func findProducts(ctx context.Context, q url.Values, collection dbiface.Collecti
 		filter[k] = v[0]
 	}
 
+	// changing id from type string to type primitive.ObjectID
 	if filter["_id"] != "" { // changing id from type string to type primitive.ObjectID
 		docID, err := primitive.ObjectIDFromHex(filter["_id"].(string))
 		if err != nil {
@@ -64,11 +65,13 @@ func findProducts(ctx context.Context, q url.Values, collection dbiface.Collecti
 		filter["_id"] = docID
 	}
 
+	// cursor is a a list of cursors to items in the db that match filter
 	cursor, err := collection.Find(ctx, bson.M(filter))
 	if err != nil {
 		log.Errorf("Unable to find products: %v", err)
 		return products, err
 	}
+	// All will write items pointed to by cursor into the products slice
 	if err := cursor.All(ctx, &products); err != nil {
 		log.Errorf("Unable to read cursor: %v", err)
 		return products, err
