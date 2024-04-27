@@ -3,14 +3,15 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"net/url"
 
 	"github.com/bedminer1/SampleEchoServer/dbiface"
-	
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"gopkg.in/go-playground/validator.v9"
 )
 
@@ -46,21 +47,28 @@ func (p *ProductValidator) Validate(i interface{}) error {
 	return p.validator.Struct(i)
 }
  
-func findProducts(ctx context.Context, collection dbiface.CollectionAPI) ([]Product, error) {
+func findProducts(ctx context.Context, q url.Values, collection dbiface.CollectionAPI) ([]Product, error) {
 	var products []Product
-	cursor, err := collection.Find(ctx, bson.M{})
+	filter := make(map[string]interface{})
+	for k, v := range q {
+		filter[k] = v[0]
+	}
+
+	cursor, err := collection.Find(ctx, bson.M(filter))
 	if err != nil {
 		log.Errorf("Unable to find products: %v", err)
+		return products, err
 	}
 	if err := cursor.All(ctx, &products); err != nil {
 		log.Errorf("Unable to read cursor: %v", err)
+		return products, err
 	}
 	return products, nil
 }
 
-// GetProducts is a HandlerFunc that writes a list of products
+// GetProducts is a HandlerFunc that responds with a list of products
 func (h ProductHandler) GetProducts(c echo.Context) error {
-	products, err := findProducts(context.Background(), h.Col)
+	products, err := findProducts(context.Background(), c.QueryParams(), h.Col)
 	if err != nil {
 		return err
 	}
@@ -83,7 +91,7 @@ func insertProducts(ctx context.Context, products []Product, collection dbiface.
 	return insertedIds, nil
 }
 
-// CreateProducts create products on mongodb
+// CreateProducts create products on mongodb and responds with IDs of products
 func (h *ProductHandler) CreateProducts(c echo.Context) error {
 	var products []Product
 	c.Echo().Validator = &ProductValidator{validator: v}
