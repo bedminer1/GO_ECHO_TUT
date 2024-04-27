@@ -71,6 +71,7 @@ func main() {
 	// HANDLERS
 	e.POST("/products", h.CreateProducts, middleware.BodyLimit("1M")) // 1mb payload limit
 	e.GET("/products", h.GetProducts)
+	e.PUT("/products/:_id", h.UpdateProduct, middleware.BodyLimit("1M"))
 
 
 	// START SERVER

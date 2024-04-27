@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -57,7 +59,7 @@ func findProducts(ctx context.Context, q url.Values, collection dbiface.Collecti
 	}
 
 	// changing id from type string to type primitive.ObjectID
-	if filter["_id"] != "" { // changing id from type string to type primitive.ObjectID
+	if filter["_id"] != nil { 
 		docID, err := primitive.ObjectIDFromHex(filter["_id"].(string))
 		if err != nil {
 			return products, err
@@ -80,13 +82,56 @@ func findProducts(ctx context.Context, q url.Values, collection dbiface.Collecti
 }
 
 // GetProducts is a HandlerFunc that responds with a list of products
-func (h ProductHandler) GetProducts(c echo.Context) error {
+func (h *ProductHandler) GetProducts(c echo.Context) error {
 	products, err := findProducts(context.Background(), c.QueryParams(), h.Col)
 	if err != nil {
 		return err
 	}
 
 	return c.JSON(http.StatusOK, products)
+}
+
+func modifyProduct(ctx context.Context, id string, reqBody io.ReadCloser, collection dbiface.CollectionAPI) (Product, error) {
+	var product Product
+
+	// find if products exists : return 404
+	docID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return product, err
+	}
+	filter := bson.M{"_id": docID}
+	res := collection.FindOne(ctx, filter)
+	if err := res.Decode(&product); err != nil {
+		return product, err
+	}
+
+	// decode the request payload 
+	if err := json.NewDecoder(reqBody).Decode(&product); err != nil {
+		return product, err
+	}
+
+	// validate request
+	if err := v.Struct(product); err != nil {
+		return product, err
+	}
+
+	// update the product in db
+	if _, err := collection.UpdateOne(ctx, filter, bson.M{"$set":product}); err != nil {
+		return product, nil
+	}
+
+
+	return product, nil
+}
+
+// UpdateProduct updates a product in the db
+func (h *ProductHandler) UpdateProduct(c echo.Context) error {
+	product, err := modifyProduct(context.Background(), c.Param("_id"), c.Request().Body, h.Col)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, product)
 }
 
 // insertProducts generates IDs and inserts products into mongo col
