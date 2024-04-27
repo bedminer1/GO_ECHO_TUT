@@ -49,9 +49,19 @@ func (p *ProductValidator) Validate(i interface{}) error {
  
 func findProducts(ctx context.Context, q url.Values, collection dbiface.CollectionAPI) ([]Product, error) {
 	var products []Product
+
+	// filter is a map of query param keys to query param values
 	filter := make(map[string]interface{})
-	for k, v := range q {
+	for k, v := range q { // setting first value as value (simplified implementation)
 		filter[k] = v[0]
+	}
+
+	if filter["_id"] != "" { // changing id from type string to type primitive.ObjectID
+		docID, err := primitive.ObjectIDFromHex(filter["_id"].(string))
+		if err != nil {
+			return products, err
+		}
+		filter["_id"] = docID
 	}
 
 	cursor, err := collection.Find(ctx, bson.M(filter))
