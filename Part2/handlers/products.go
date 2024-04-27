@@ -97,26 +97,32 @@ func modifyProduct(ctx context.Context, id string, reqBody io.ReadCloser, collec
 	// find if products exists : return 404
 	docID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
+		log.Errorf("Could not convert to ObjectID: %v", err)
 		return product, err
 	}
 	filter := bson.M{"_id": docID}
 	res := collection.FindOne(ctx, filter)
-	if err := res.Decode(&product); err != nil {
+
+	if err := res.Err(); err != nil {
+		log.Errorf("Could not find product in db: %v", err)
 		return product, err
 	}
 
 	// decode the request payload 
 	if err := json.NewDecoder(reqBody).Decode(&product); err != nil {
+		log.Errorf("Could not decode reqBody: %v", err)
 		return product, err
 	}
 
 	// validate request
 	if err := v.Struct(product); err != nil {
+		log.Errorf("Could not validate product: %v", err)
 		return product, err
 	}
 
 	// update the product in db
 	if _, err := collection.UpdateOne(ctx, filter, bson.M{"$set":product}); err != nil {
+		log.Errorf("Could not update product in db: %v", err)
 		return product, nil
 	}
 
