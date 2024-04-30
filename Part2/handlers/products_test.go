@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -39,6 +40,15 @@ func init() {
 
 	db = c.Database(cfg.DBName)
 	col = db.Collection(cfg.ProductCollection)
+}
+
+// clean up testing db
+func TestMain(m *testing.M) {
+	ctx := context.Background()
+	testCode := m.Run()
+	col.Drop(ctx)
+	db.Drop(ctx)
+	os.Exit(testCode)
 }
 
 func TestProduct(t *testing.T) {
