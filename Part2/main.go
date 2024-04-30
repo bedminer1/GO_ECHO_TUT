@@ -73,6 +73,10 @@ func main() {
 	e.GET("/products", h.GetProducts)
 	e.PUT("/products/:_id", h.UpdateProduct, middleware.BodyLimit("1M"))
 
+	e.GET("/products/:id", h.GetProduct)
+	e.GET("/products/:id", h.DeleteProduct)
+	
+
 
 	// START SERVER
 	e.Logger.Infof("Listening on %s:%s", cfg.Host, cfg.Port)

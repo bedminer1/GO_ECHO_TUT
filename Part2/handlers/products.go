@@ -91,6 +91,38 @@ func (h *ProductHandler) GetProducts(c echo.Context) error {
 	return c.JSON(http.StatusOK, products)
 }
 
+func findProduct(ctx context.Context, id string, collection dbiface.CollectionAPI) (Product, error) {
+	var product Product
+
+	docID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return product, err
+	}
+
+	res := collection.FindOne(ctx, bson.M{"_id": docID})
+	err = res.Decode(&product)
+	if err != nil {
+		return product, err
+	}
+
+	return product, nil
+} 
+
+// GetProduct gets a single product
+func (h *ProductHandler) GetProduct(c echo.Context) error {
+	product, err := findProduct(context.Background(), c.Param("id"), h.Col)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, product)
+}
+
+func (h *ProductHandler) DeleteProduct(c echo.Context) error {
+	return c.JSON(http.StatusOK, "product deleted")
+}
+
+
 func modifyProduct(ctx context.Context, id string, reqBody io.ReadCloser, collection dbiface.CollectionAPI) (Product, error) {
 	var product Product
 
