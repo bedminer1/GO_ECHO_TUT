@@ -94,7 +94,49 @@ func TestProduct(t *testing.T) {
 		err = json.Unmarshal(res.Body.Bytes(), &products)
 		assert.Nil(t, err)
 		for _, product := range products {
-			assert.Equal(t, "macbook", product.Name)
+			assert.Equal(t, "alexa", product.Name)
+		}
+	})
+
+	t.Run("get products with query params", func(t *testing.T) {
+		var products []Product
+		req := httptest.NewRequest("GET", "/products?currency=SGD", nil)
+		res := httptest.NewRecorder()
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		e := echo.New()
+		c := e.NewContext(req , res)
+		h.Col = col
+		err := h.GetProducts(c)
+
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusOK, res.Code)
+
+		err = json.Unmarshal(res.Body.Bytes(), &products)
+		assert.Nil(t, err)
+		for _, product := range products {
+			assert.Equal(t, "alexa", product.Name)
+		}
+	})
+
+	t.Run("get a product", func(t *testing.T) {
+		var products []Product
+		req := httptest.NewRequest("GET", fmt.Sprintf("/products/%s", docID), nil)
+		res := httptest.NewRecorder()
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+		e := echo.New()
+		c := e.NewContext(req , res)
+		h.Col = col
+		err := h.GetProduct(c)
+
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusOK, res.Code)
+
+		err = json.Unmarshal(res.Body.Bytes(), &products)
+		assert.Nil(t, err)
+		for _, product := range products {
+			assert.Equal(t, "alexa", product.Name)
 		}
 	})
 }
