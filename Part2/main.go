@@ -74,7 +74,7 @@ func main() {
 	e.PUT("/products/:_id", h.UpdateProduct, middleware.BodyLimit("1M"))
 
 	e.GET("/products/:id", h.GetProduct)
-	e.GET("/products/:id", h.DeleteProduct)
+	e.DELETE("/products/:id", h.DeleteProduct)
 	
 
 
