@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -41,10 +42,13 @@ func init() {
 }
 
 func TestProduct(t *testing.T) {
+	var docID string
+
 	t.Run("test create product", func (t *testing.T) {
+		var IDs []string
 		body := `
 		[{
-			"product_name": "mac,book",
+			"product_name": "macbook",
 			"price": 250,
 			"currency": "USD",
 			"vendor": "Apple",
@@ -62,10 +66,19 @@ func TestProduct(t *testing.T) {
 
 		// if err == nil, test passed
 		assert.Nil(t, err)
-		assert.Equal(t, http.StatusOK, res.Code)
-	})
+		assert.Equal(t, http.StatusCreated, res.Code)
+
+		err = json.Unmarshal(res.Body.Bytes(), &IDs)
+		assert.Nil(t, err)
+		docID = IDs[0]
+		t.Logf("IDs: %#+v\n", IDs)
+		for _, ID := range IDs {
+			assert.NotNil(t, ID)
+		}
+ 	})
 
 	t.Run("get products", func(t *testing.T) {
+		var products []Product
 		req := httptest.NewRequest("GET", "/products", nil)
 		res := httptest.NewRecorder()
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
@@ -77,5 +90,11 @@ func TestProduct(t *testing.T) {
 
 		assert.Nil(t, err)
 		assert.Equal(t, http.StatusOK, res.Code)
+
+		err = json.Unmarshal(res.Body.Bytes(), &products)
+		assert.Nil(t, err)
+		for _, product := range products {
+			assert.Equal(t, "macbook", product.Name)
+		}
 	})
 }
