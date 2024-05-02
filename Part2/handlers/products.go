@@ -92,18 +92,18 @@ func (h *ProductHandler) GetProducts(c echo.Context) error {
 }
 
 // findProduct finds product with given ID and returns its data
-func findProduct(ctx context.Context, id string, collection dbiface.CollectionAPI) (Product, error) {
+func findProduct(ctx context.Context, id string, collection dbiface.CollectionAPI) (Product, *echo.HTTPError) {
 	var product Product
 
 	docID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return product, err
+		return product, echo.NewHTTPError(http.StatusInternalServerError, "unable to convert to docID")
 	}
 
 	res := collection.FindOne(ctx, bson.M{"_id": docID})
 	err = res.Decode(&product)
 	if err != nil {
-		return product, err
+		return product, echo.NewHTTPError(http.StatusNotFound, "unable to find product")
 	}
 
 	return product, nil

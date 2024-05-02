@@ -67,6 +67,10 @@ func main() {
 	// MIDDLEWARE
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Pre(addCorrelationID) // passes correlation ID, passing to microservices
+	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig {
+		Format: `${time_rfc3339_nano} ${remote_ip} ${header:X-Correlation-ID} ${host} ${method} ${uri} ${user_agent} ` +
+		`${status} ${error} ${latency_human}` + "\n",
+	}))
 
 	// HANDLERS
 	e.POST("/products", h.CreateProducts, middleware.BodyLimit("1M")) // 1mb payload limit
